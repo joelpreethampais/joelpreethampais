@@ -1,0 +1,18 @@
+Request a Quota Increase:
+	•	Select the Quota to Increase:
+	•	Check the box next to the VLAN attachment quota you want to increase.
+	•	Click on Edit Quotas:
+	•	Click the Edit Quotas button at the top of the Quotas page.
+	•	Fill in the Request Form:
+	•	New Quota Limit: Enter the new desired quota limit.
+	•	Description: Provide a justification for the increase (e.g., expanding network capacity, adding new regions, increased project demand).
+	•	Contact Information: Ensure your contact details are up to date so Google can reach you if needed.
+	•	Submit the Request:
+	•	Click Submit request to send your quota increase request to Google.
+	3.	Wait for Approval:
+	•	Processing Time:
+	•	Google usually processes quota requests within a few hours to a couple of days, depending on the complexity and urgency of the request.
+	•	Monitoring:
+	•	You can check the status of your request in the Quotas page or by viewing notifications in the Google Cloud Console.
+	4.	Contact Support if Necessary:
+	•	If you have an urgent need for the quota increase or your request is taking longer than expected, you can contact Google Cloud Support directly for assistance.
