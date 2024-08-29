@@ -1,25 +1,115 @@
-To delete interconnects in Google Cloud Platform (GCP), follow these steps:
+Test Plan for Testing Firewall Policies on GCP for Egress Traffic
 
-	1.	Access the Google Cloud Console:
-	•	Go to the Google Cloud Console and log in with your credentials.
-	2.	Navigate to the Interconnect Section:
-	•	In the Google Cloud Console, click on the hamburger menu (three horizontal lines) in the top left corner.
-	•	Go to Hybrid Connectivity and select Interconnects.
-	3.	Select the Interconnect:
-	•	Find the interconnect you want to delete. You might need to select the appropriate project or region if you have multiple.
-	•	Click on the interconnect to open its details.
-	4.	Delete Associated VLAN Attachments (If Necessary):
-	•	If there are any VLAN attachments (also known as Interconnect Attachments) associated with the interconnect, you need to delete them first.
-	•	Go to Hybrid Connectivity > Interconnect Attachments (VLANs), select the relevant VLAN attachments, and delete them.
-	5.	Delete the Interconnect:
-	•	After deleting the VLAN attachments, return to the Interconnects section.
-	•	Select the interconnect you want to delete.
-	•	Click on the Delete button or select Delete from the actions menu.
-	6.	Confirm Deletion:
-	•	Confirm that you want to delete the interconnect. Be aware that this action cannot be undone.
-	7.	Wait for the Deletion Process to Complete:
-	•	The deletion process might take some time, depending on the resources involved.
-	8.	Verify Deletion:
-	•	Ensure that the interconnect and any associated resources (like VLAN attachments) have been deleted by refreshing the page or checking the resources in the Interconnects and Interconnect Attachments (VLANs) sections.
+1. Objective
 
-Once these steps are completed, the interconnect and its associated resources will be fully removed from your GCP project.
+The purpose of this test plan is to validate that the firewall policies configured on Google Cloud Platform (GCP) effectively manage and restrict egress traffic as intended. This will include testing different scenarios to ensure that traffic is allowed, denied, or redirected based on the firewall rules.
+
+2. Scope
+
+	•	Testing will be conducted on egress traffic from various virtual machines (VMs) within GCP.
+	•	The focus will be on firewall policies that control outgoing traffic to external IP addresses and services.
+	•	Both allow and deny rules will be tested.
+	•	Testing will include different protocols and ports (e.g., HTTP, HTTPS, SSH).
+
+3. Pre-requisites
+
+	•	Access to the GCP project with appropriate permissions to create, modify, and delete firewall rules.
+	•	Several test VMs deployed in GCP.
+	•	Knowledge of the egress traffic requirements for the application or service.
+	•	A list of IP ranges, protocols, and ports that are critical for the test.
+
+4. Test Environment
+
+	•	GCP Project: [Specify the GCP project name]
+	•	Test VMs: [List VM names and types]
+	•	Firewall Rules: [List the firewall rules to be tested]
+
+5. Test Cases
+
+Use Case 1: Basic Allow Rule Verification
+
+	•	Objective: Ensure that egress traffic is allowed based on the configured firewall rule.
+	•	Steps:
+	1.	Create a firewall rule that allows egress traffic from the VM to a specific IP range (e.g., 0.0.0.0/0) on port 80 (HTTP).
+	2.	From the VM, attempt to access an external web server (e.g., curl http://example.com).
+	3.	Verify that the connection is successful.
+	•	Expected Result: Traffic is allowed, and the web page is accessible.
+
+Use Case 2: Deny Rule Verification
+
+	•	Objective: Verify that egress traffic is blocked when a deny rule is in place.
+	•	Steps:
+	1.	Create a firewall rule that denies egress traffic from the VM to a specific IP range on port 80 (HTTP).
+	2.	From the VM, attempt to access the external web server.
+	3.	Verify that the connection is blocked.
+	•	Expected Result: Traffic is denied, and the web page is not accessible.
+
+Use Case 3: Protocol-Specific Allow/Deny
+
+	•	Objective: Test firewall rules that allow or deny traffic based on specific protocols.
+	•	Steps:
+	1.	Create a firewall rule that allows egress traffic for ICMP (ping).
+	2.	From the VM, ping an external IP (e.g., ping 8.8.8.8).
+	3.	Verify that the ping is successful.
+	4.	Modify the rule to deny ICMP traffic.
+	5.	Attempt to ping the external IP again.
+	•	Expected Result: Traffic is allowed or denied based on the protocol-specific rule.
+
+Use Case 4: Port-Specific Rules
+
+	•	Objective: Ensure that firewall rules work correctly when filtering traffic by specific ports.
+	•	Steps:
+	1.	Create a firewall rule that allows egress traffic on port 443 (HTTPS).
+	2.	Attempt to access a secure website from the VM (e.g., curl https://example.com).
+	3.	Verify the connection is successful.
+	4.	Create a deny rule for port 443.
+	5.	Attempt to access the secure website again.
+	•	Expected Result: The connection should succeed when allowed and fail when denied.
+
+Use Case 5: Logging and Monitoring
+
+	•	Objective: Verify that egress traffic is logged and can be monitored when firewall rules are applied.
+	•	Steps:
+	1.	Enable logging for the firewall rule.
+	2.	Generate egress traffic by accessing an external service.
+	3.	Check GCP logging (Cloud Logging) to verify that the traffic was logged.
+	•	Expected Result: All egress traffic that matches the rule should be logged.
+
+Use Case 6: Priority Testing
+
+	•	Objective: Test the priority of firewall rules to ensure the correct rule is applied when multiple rules exist.
+	•	Steps:
+	1.	Create two firewall rules with different priorities, one allowing and one denying traffic on the same port.
+	2.	Test the egress traffic from the VM.
+	•	Expected Result: The rule with the higher priority should be enforced.
+
+Use Case 7: Egress Traffic to Specific Destinations
+
+	•	Objective: Test egress traffic to specific destinations like specific VPCs, external services, or regions.
+	•	Steps:
+	1.	Create a firewall rule allowing egress traffic to a specific IP range or region.
+	2.	Attempt to connect to services in that IP range or region.
+	•	Expected Result: Traffic should be allowed only to the specified destinations.
+
+6. Test Execution
+
+	•	Test Engineer: [Name]
+	•	Schedule: [Start Date] to [End Date]
+	•	Location: [Specify if remote or on-premises testing]
+
+7. Test Reporting
+
+	•	Document the results of each test case.
+	•	Include any issues found, steps to reproduce, and suggested fixes.
+	•	Provide a summary report of the overall test, including pass/fail rates and any recommendations.
+
+8. Risks and Mitigation
+
+	•	Risk: Misconfiguration of firewall rules could disrupt service.
+	•	Mitigation: Apply rules in a staging environment first, and have a rollback plan.
+
+9. Sign-Off
+
+	•	The test plan must be reviewed and approved by relevant stakeholders before execution.
+
+This plan can be adjusted based on specific project needs or additional scenarios.
