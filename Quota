@@ -1,18 +1,25 @@
-Request a Quota Increase:
-	•	Select the Quota to Increase:
-	•	Check the box next to the VLAN attachment quota you want to increase.
-	•	Click on Edit Quotas:
-	•	Click the Edit Quotas button at the top of the Quotas page.
-	•	Fill in the Request Form:
-	•	New Quota Limit: Enter the new desired quota limit.
-	•	Description: Provide a justification for the increase (e.g., expanding network capacity, adding new regions, increased project demand).
-	•	Contact Information: Ensure your contact details are up to date so Google can reach you if needed.
-	•	Submit the Request:
-	•	Click Submit request to send your quota increase request to Google.
-	3.	Wait for Approval:
-	•	Processing Time:
-	•	Google usually processes quota requests within a few hours to a couple of days, depending on the complexity and urgency of the request.
-	•	Monitoring:
-	•	You can check the status of your request in the Quotas page or by viewing notifications in the Google Cloud Console.
-	4.	Contact Support if Necessary:
-	•	If you have an urgent need for the quota increase or your request is taking longer than expected, you can contact Google Cloud Support directly for assistance.
+To delete interconnects in Google Cloud Platform (GCP), follow these steps:
+
+	1.	Access the Google Cloud Console:
+	•	Go to the Google Cloud Console and log in with your credentials.
+	2.	Navigate to the Interconnect Section:
+	•	In the Google Cloud Console, click on the hamburger menu (three horizontal lines) in the top left corner.
+	•	Go to Hybrid Connectivity and select Interconnects.
+	3.	Select the Interconnect:
+	•	Find the interconnect you want to delete. You might need to select the appropriate project or region if you have multiple.
+	•	Click on the interconnect to open its details.
+	4.	Delete Associated VLAN Attachments (If Necessary):
+	•	If there are any VLAN attachments (also known as Interconnect Attachments) associated with the interconnect, you need to delete them first.
+	•	Go to Hybrid Connectivity > Interconnect Attachments (VLANs), select the relevant VLAN attachments, and delete them.
+	5.	Delete the Interconnect:
+	•	After deleting the VLAN attachments, return to the Interconnects section.
+	•	Select the interconnect you want to delete.
+	•	Click on the Delete button or select Delete from the actions menu.
+	6.	Confirm Deletion:
+	•	Confirm that you want to delete the interconnect. Be aware that this action cannot be undone.
+	7.	Wait for the Deletion Process to Complete:
+	•	The deletion process might take some time, depending on the resources involved.
+	8.	Verify Deletion:
+	•	Ensure that the interconnect and any associated resources (like VLAN attachments) have been deleted by refreshing the page or checking the resources in the Interconnects and Interconnect Attachments (VLANs) sections.
+
+Once these steps are completed, the interconnect and its associated resources will be fully removed from your GCP project.
