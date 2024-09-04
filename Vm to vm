@@ -1,0 +1,56 @@
+East-West Traffic Pattern from VM in VPC to Google Managed Services in GCP
+
+Overview
+
+East-West traffic in Google Cloud Platform (GCP) typically refers to network communication within the same cloud environment. This can include traffic between Virtual Machines (VMs) within a VPC, as well as between VMs and Google-managed services like Cloud SQL, Cloud Storage, or BigQuery.
+
+When VMs in a VPC communicate with Google-managed services using internal IP addresses, this traffic is considered East-West since it stays within the same cloud region or VPC network and doesn’t traverse the public internet.
+
+Components Involved
+
+	•	Virtual Machines (VMs): Compute instances within a GCP VPC that host applications or services.
+	•	VPC Network: A private, isolated network in GCP that contains resources like VMs, subnets, and routes.
+	•	Google Managed Services: Cloud services offered by Google, such as Cloud SQL, Cloud Storage, BigQuery, etc.
+	•	Private Service Connect: A GCP feature that enables private connectivity to Google services using internal IP addresses.
+
+East-West Traffic Flow
+
+	1.	VM in VPC Initiates Communication:
+	•	A VM within a VPC initiates a connection to a Google-managed service (e.g., Cloud SQL).
+	•	The VM uses the internal IP address provided by the managed service, ensuring that traffic does not leave the GCP network.
+	2.	Routing Through VPC Network:
+	•	The VPC network routes this internal traffic securely within Google’s global infrastructure.
+	•	If the managed service is in the same region as the VM, the traffic remains within that region’s network, further optimizing latency and performance.
+	3.	Google Managed Service Receives Traffic:
+	•	The Google-managed service, such as Cloud SQL, receives the traffic, processes the request, and returns the response over the same internal network.
+	•	The use of internal IPs and Google’s infrastructure ensures that this traffic is secure and does not traverse the public internet.
+	4.	Response to VM:
+	•	The managed service sends the response back to the VM using the internal IP address, completing the East-West communication cycle.
+
+Use Case: Web Application with Cloud SQL Backend
+
+Scenario:
+A company is running a web application on a VM in GCP, with the backend database hosted on Cloud SQL. Both the VM and Cloud SQL instance are within the same VPC network but in different subnets. The company wants to ensure that the communication between the web application and the database remains secure, low-latency, and cost-effective.
+
+Steps:
+
+	1.	VM Deployment:
+	•	The web application is deployed on a VM in a VPC subnet.
+	2.	Cloud SQL Configuration:
+	•	The Cloud SQL instance is configured with a private IP address, allowing it to be accessible only from within the VPC.
+	3.	Traffic Flow:
+	•	The web application VM connects to the Cloud SQL instance using the private IP address.
+	•	The traffic between the VM and Cloud SQL stays within the GCP network, ensuring high performance and security.
+	4.	Security and Compliance:
+	•	No data is exposed to the public internet, reducing the risk of security breaches.
+	•	This setup helps the company meet compliance requirements for data protection.
+
+Benefits:
+
+	•	Security: The use of internal IPs ensures that traffic remains within GCP’s network, reducing exposure to external threats.
+	•	Performance: Since the traffic stays within the same region and network, latency is minimized, leading to faster response times for the application.
+	•	Cost Efficiency: Internal traffic does not incur egress charges, making this setup cost-effective.
+
+Conclusion
+
+This East-West traffic pattern is ideal for scenarios where security, performance, and cost-efficiency are critical. By leveraging internal IPs and GCP’s managed networking infrastructure, businesses can ensure that their VM-to-Google managed service communication is optimized for cloud-native environments.
