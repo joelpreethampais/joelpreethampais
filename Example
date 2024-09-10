@@ -1,5 +1,0 @@
-Scenario:
-
-A company has a legacy system running on a VM instance that processes large batches of user data (e.g., customer orders, logs, or sensor data). After processing the data, the VM needs to send the processed results to a Cloud Run service, which handles tasks like further transformations, storage, or forwarding the data to other services (e.g., BigQuery or Cloud Storage).
-
-In this use case, the VM acts as a batch processor, while Cloud Run acts as a stateless, autoscaling microservice that processes the incoming data in real time.
