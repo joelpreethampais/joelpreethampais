@@ -1,0 +1,5 @@
+Use Case: Real-Time Data Ingestion from a REST API to Cloud SQL using Cloud Run
+
+Scenario:
+
+A company runs a logistics platform that collects real-time location and status updates from delivery trucks via a REST API. The API ingests data like GPS coordinates, delivery statuses, and timestamps. The company wants to store this data in Cloud SQL (MySQL) for further analysis, reporting, and integration with other systems.
