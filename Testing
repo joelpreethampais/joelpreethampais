@@ -1,32 +1,28 @@
-Here's a Jira story description you can use or adapt for your needs:
+Sure! Here's a Jira story description tailored for discovering MACsec features:
 
 ---
 
-**Title**: Create Detailed MACsec Test Plan in GCP
+**Title**: Perform Discovery of MACsec Features in GCP
 
 **Description**:  
-We need to design and document a comprehensive test plan to validate MACsec (Media Access Control Security) functionality within our GCP environment. This plan will serve as the foundation for ensuring secure Layer 2 encryption over supported interfaces and help identify any gaps or misconfigurations.
+We need to perform a thorough discovery of MACsec (Media Access Control Security) features available in Google Cloud Platform. This effort will help us understand the current capabilities, limitations, and prerequisites for implementing MACsec in our environment. The findings from this discovery will guide the design of our MACsec test plan and implementation strategy.
 
-The test plan should cover:
+Scope of discovery includes:
 
-- Overview of MACsec and its relevance in our architecture  
-- GCP prerequisites and supported configurations for MACsec  
-- Detailed test scenarios including:  
-  - Interface and VPC configuration  
-  - Enabling and validating MACsec on supported instances  
-  - Positive test cases (e.g., successful encryption, secure communication)  
-  - Negative test cases (e.g., misconfiguration, dropped packets)  
-- Validation steps and expected outcomes  
-- Troubleshooting guidance for common issues  
-- Tools and scripts to be used for validation  
-- Logging and monitoring considerations  
+- Identify GCP products and network interfaces that support MACsec  
+- Understand configuration options and available APIs/CLI commands  
+- Review official GCP documentation, release notes, and support articles  
+- Gather information on prerequisites, such as supported VM types, NIC types, and OS/kernel versions  
+- Determine monitoring and troubleshooting tools available for MACsec  
+- Capture details on performance impact, encryption standards used, and integration with other GCP security features  
+- Document any known limitations, caveats, or best practices  
 
 **Acceptance Criteria**:
-- A detailed and version-controlled MACsec test plan document is created and reviewed  
-- Test scenarios include both positive and negative cases  
-- Validation steps are clear and repeatable  
-- Aligned with current GCP MACsec support and documentation  
+- A discovery document is created summarizing all findings  
+- Information is verified against official GCP sources  
+- Relevant links to documentation and tools are included  
+- Output is reviewed and approved for use in the MACsec test plan  
 
 ---
 
-Would you like this as a sub-task for a larger epic or include links to any existing RFCs or design docs?
+Let me know if you want this to include competitive analysis (e.g., how MACsec is handled in AWS/Azure) or if it's GCP-only.
