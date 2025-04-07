@@ -1,0 +1,32 @@
+Here's a Jira story description you can use or adapt for your needs:
+
+---
+
+**Title**: Create Detailed MACsec Test Plan in GCP
+
+**Description**:  
+We need to design and document a comprehensive test plan to validate MACsec (Media Access Control Security) functionality within our GCP environment. This plan will serve as the foundation for ensuring secure Layer 2 encryption over supported interfaces and help identify any gaps or misconfigurations.
+
+The test plan should cover:
+
+- Overview of MACsec and its relevance in our architecture  
+- GCP prerequisites and supported configurations for MACsec  
+- Detailed test scenarios including:  
+  - Interface and VPC configuration  
+  - Enabling and validating MACsec on supported instances  
+  - Positive test cases (e.g., successful encryption, secure communication)  
+  - Negative test cases (e.g., misconfiguration, dropped packets)  
+- Validation steps and expected outcomes  
+- Troubleshooting guidance for common issues  
+- Tools and scripts to be used for validation  
+- Logging and monitoring considerations  
+
+**Acceptance Criteria**:
+- A detailed and version-controlled MACsec test plan document is created and reviewed  
+- Test scenarios include both positive and negative cases  
+- Validation steps are clear and repeatable  
+- Aligned with current GCP MACsec support and documentation  
+
+---
+
+Would you like this as a sub-task for a larger epic or include links to any existing RFCs or design docs?
