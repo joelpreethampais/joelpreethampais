@@ -1,1 +1,30 @@
+Sure! Here's a Jira story description for creating an NCC NAT module in GCP:
 
+---
+
+**Title**: Develop NCC NAT Module in GCP
+
+**Description**:  
+We need to develop a reusable NAT module for NCC (Network Connectivity Center) in GCP. This module will be used to enable centralized egress and NAT functionality for spokes connected to the NCC hub. It should be designed for flexibility, scalability, and compliance with our network architecture standards.
+
+The module should support:
+
+- Creation and configuration of Cloud NAT on GCP routers associated with NCC spoke VPCs  
+- Support for dynamic configuration of NAT IP ranges and subnet associations  
+- Reusability across multiple environments (e.g., dev, staging, prod)  
+- Integration with Terraform (or chosen IaC tool) for infrastructure automation  
+- Tagging and naming conventions as per our standards  
+- Outputs to expose relevant NAT configuration details (e.g., IPs, router names, region)
+
+**Acceptance Criteria**:
+1. A working NCC NAT module is developed and stored in the infrastructure repo.
+2. The module supports input variables for flexibility (e.g., region, subnets, router names, NAT IPs).
+3. The module is tested in a non-prod environment with at least one spoke VPC.
+4. Module is compliant with existing naming/tagging conventions.
+5. Outputs are defined for NAT gateway details and integration purposes.
+6. Documentation is provided for usage, inputs/outputs, and examples.
+7. Reviewed and approved by the networking and cloud engineering teams.
+
+---
+
+Let me know if you want it tailored for a specific IaC tool or if the NAT configuration has any special security rules or constraints.
