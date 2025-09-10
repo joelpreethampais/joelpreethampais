@@ -1,0 +1,291 @@
+Cloud Discovery & Visibility:
+The BlueCat Cloud Discovery & Visibility (CDV) Adaptive Application lets you look for network objects and infrastructure from Google Cloud Platform (GCP) environments, then import the discovered objects into Address Manager. This provides continuous, real-time visibility into the changes to your GCP infrastructure.
+Its one way. Note that Address manager data cannot be exported to GCP.
+
+++++++++++++++++++++++++++++++++++++++
+Combination:
+Address Manager 9.4.X and above integrated with CDV 25.1 gives the combination of IPAM and auto discovery, auomatic update when resources are altered or deleted in GCP with Address Manager.
+++++++++++++++++++++++++++++++++++++++
+Known issues:
+GCP Visibility jobs currently do not support handling Update/Patch operation messages from the DNS zone service. However, this does not impact Scheduled GCP Discovery jobs.
+++++++++++++++++++++++++++++++++++++++
+What can be imported:
+GCP VPC/Subnet
+GCP Public VPC/Subnet
+GCP Virtual Machines
+GCP Load Balancers
+GCP Cloud DNS (Private Zones)
+GCP Cloud DNS (Public Zones)
+GCP Private Endpoints
+GCP Kubernetes Engine
++++++++++++++++++++++++++++++++++++++
+Installing CDV on a GCP virtual machine:
+If you use Google Cloud Platform (GCP) as a resource provider, you can deploy Cloud Discovery & Visibility (CDV) on a virtual machine (VM) running in the GCP environment.
+CDV is provided as a Docker image.
+
+Create VM with below settings:
+-Compute Engine default service account.
+-In Access scope, select Allow full access to all Cloud APIs.
+-Allow HTTP traffic and Allow HTTPS traffic checkboxes. Doing so will automatically create a firewall and open standard ports 80 and 443 on your machine.
+-Allow SSH access
+-Install docker using "sudo apt update && sudo apt install docker.io"
+
+Install CDV:
+-Download the latest custom BlueCat Gateway image that contains the Cloud Discovery & Visibility (CDV) workflow.
+
+Prerequisites:
+-You must have at least 2 CPUs and 8GB of RAM allocated to the host machine that will be running the BlueCat Gateway instance.
+-You must have Docker installed on the host machine that will be running the BlueCat Gateway instance. For more information, refer to the 'Requirements' section of the BlueCat Gateway Installation Guide.
+-You must have an Address Manager server configured with the BlueCatGateway UDF and a BlueCat Gateway user. For more information, refer to the 'Configuring BlueCat Gateway' section of the BlueCat Gateway Installation Guide.
+-You must have purchased the Cloud Discovery & Visibility Adaptive Application from BlueCat.
+-You must have a Quay account that has been granted read access to the Cloud Discovery & Visibility private repository.
+-For more information on setting up your Quay account, refer to the information that was provided when you purchased the Cloud Discovery & Visibility Adaptive Application from BlueCat.
+-You must have a Docker CLI password.
+-You can create one by clicking Generate Encrypted Password under Docker CLI Password on the Account Settings page in Quay.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+Defining the workspace and log directories
+
+When you first install the Cloud Discovery & Visibility Adaptive Application, BlueCat recommends setting up your workspace and logs directory right away:
+
+Define a workspace:
+
+A workspace is the logical location for workflows and associated data, including configurations, libraries, requirements, permissions, and customizations. A workspace can be a Docker volume (recommended), or a volume on your local machine. For more details, see the Workspace section in the BlueCat Gateway Administration Guide.
+
+Define a logs directory:
+
+A logs directory can be a Docker volume (recommended), or a volume on your local machine
+
+Why map docker:
+Volumes are completely managed by Docker, so you typically do not need to set permissions manually when using Docker volumes. This is also the recommended practice for Docker containers.
+
+If you prefer to mount data and log volumes to your local machine, you must manually set the appropriate permissions to those directories before running the container. Refer to the steps in Installing the CDV Docker image for details.
+
+If you do not map data or log volumes to your local machine during installation, the Cloud Discovery & Visibility Adaptive Application will write all the data to the container by default. If you then stop or restart the container, all this data will be lost.
+
++++++++++++++++++++++++++++++++++++++++++++++++++++
+Minimum Docker permissions
+The following are the minimum Docker privileges required for CDV to work:
+
+CHOWN	
+Can make arbitrary changes to file UIDs and GIDs.
+
+DAC_OVERRIDE	DAC is short for "Discretionary Access Control". Can bypass kernel permission checks on file, write, and execute operations.
+FOWNER	
+Can bypass permission checks that normally require file system UIDs to match the file UID (except for operations covered by DAC_OVERRIDE and DAC_READ_SEARCH).
+
+SETUID	Can arbitrarily manipulate process GIDs, such as writing a group ID mapping in a namespace.
+SETGID	Can arbitrarily manipulate process UIDs, such as writing a user ID mapping in a namespace.
+If you want to restrict CDV's privileges to the bare minimum, you can use the cap-drop and cap-add attributes when installing the image. First remove all privileges with cap-drop, then add the minimum priviliges with cap-add:
+
+docker run -d \
+...
+--cap-drop ALL \
+--cap-add CHOWN \
+--cap-add DAC_OVERRIDE \
+--cap-add FOWNER \
+--cap-add SETUID \
+--cap-add SETGID \
+...
+quay.io/bluecat/cloud_discovery_visibility:25.1      
+Installing the CDV Docker image
+To install the Cloud Discovery & Visibility image:
+
+From the host machine, run the following command:
+
+docker login quay.io
+At the prompt, enter your Quay user name and password obtained when generating the encrypted password.
+
+Download the Cloud Discovery & Visibility Adaptive Application from Quay using the following command:
+
+docker pull quay.io/bluecat/cloud_discovery_visibility:25.1
+Set the ownership of the logs directory and the workspace directory to either the user or the group under which CDV runs.
+
+Setting ownership of the folders to the user: By default, CDV runs under the flask user with UID 9000. Enable the following permissions for this user:
+
+chown -R 9000 <Path to mapped log directory>
+chmod -R u=rwx <Path to mapped log directory>
+chown -R 9000 <Path to mapped workspace directory>
+chmod -R u=rwx <Path to mapped workspace directory>
+Setting ownership of the folders to the group: By default, CDV runs under the root group (with GID 0). Enable the following permissions for this group:
+
+chgrp -R 0 <Path to mapped log directory>
+chmod -R g=rwx <Path to mapped log directory>
+chgrp -R 0 <Path to mapped workspace directory>
+chmod -R g=rwx <Path to mapped workspace directory>
+Start the custom Gateway image using the following command:
+
+docker run -d \
+-p 80:8000 \
+-p 443:44300 \
+-v <Path to mapped log directory>:/logs/ \
+-v <Path to mapped workspace directory>:/bluecat_gateway/ \
+-e BAM_IP=<Your BAM IP address> \
+--name <Gateway container name> \
+quay.io/bluecat/cloud_discovery_visibility:25.1
+If you are using Cloud Discovery & Visibility with custom certificates, do the following:
+
+Create the folder /certificates/server in the <Path to mapped workspace directory> folder:
+
+mkdir -p <Path to mapped workspace directory>/certificates/server/
+Generate your custom SSL certificate files (.crt and .key).
+
+Copy your custom SSL certificate files to the <Path to mapped workspace directory>/certificates/server/ folder, renaming them to gateway.crt and gateway.key.
+
+Apply the same permissions that you set earlier to the certificates folder. To do so, depending on whether you set the ownership based on the user or the group under which CDV runs, do one of the following:
+
+If you set ownership of the <Path to mapped workspace directory> folder to the user: By default, CDV runs under the flask user with UID 9000. Enable the following permissions for this user:
+
+chown -R 9000 <Path to mapped workspace directory>/certificates/
+chmod -R u=rwx <Path to mapped workspace directory>/certificates/
+If you set ownership of the <Path to mapped workspace directory> folder to the group: By default, CDV runs under the root group (with GID 0). Enable the following permissions for this group:
+
+chgrp -R 0 <Path to mapped workspace directory>/certificates/
+chmod -R g=rwx <Path to mapped workspace directory>/certificates/
+Restart the Docker container.
+
++++++++++++++++++++++++++++++++++++++++++++++
+Configuring CDV with persistent storage
++++++++++++++++++++++++++++++++++++
+
+You can configure visibility jobs to use persistent storage to make sure that visibility jobs are not lost and can be restarted in the case of a container shutdown.
+
+To configure the Cloud Discovery & Visibility image with persistent storage:
+
+Create a Docker volume using the following command:
+
+docker volume create <volume-name>
+Note: A persistence volume can only be used when starting a new container.
+Run a new container with the volume created using the following command:
+
+docker run -d \
+-p 80:8000 \
+-p 443:44300 \
+-v <Path to mapped log directory>:/logs/ \
+-v <Path to mapped workspace directory>:/bluecate_gateway/ \
+-v <volume-name>:/var/lib/postgresql/ \
+-e BAM_IP=<your_bam_ip_address> \
+--name <gateway_container_name> \
+quay.io/bluecat/cloud_discovery_visibility:25.1
++++++++++++++++++++++++++++++++++++++++++++
+Configuring the CDV Secret Key to automatically restart visibility jobs upon startup
+
+Sensitive information about visibility jobs that you create is encrypted when stored in the Cloud Discovery & Visibility (CDV) database. (This is mainly the BlueCat Address Manager (BAM) credentials needed to access the BAM APIs used by that job.) The key used to encrypt this information is called the CDV Secret Key.
+
+You can either explicitly define the CDV Secret Key as an environment variable when you deploy the CDV container (SECRET_KEY) , or let CDV create one. However, if you want CDV to restart visibility jobs (and Azure visibility managers) on startup, you must specify the SECRET_KEY yourself.
+
+The SECRET_KEY must have exactly 32 characters. It can include case-sensitive letters, numbers, and special characters except white space, single quotation marks ('), or double quotation marks (").
+
+For visual clarity, you can enclose the SECRET_KEY variable inside single or double quotation marks. For example:
+
+docker run -d \
+-p 80:8000 \
+-p 443:44300 \
+-v <Path to mapped log directory>:/logs/ \
+-v <Path to mapped workspace directory>:/bluecate_gateway/ \
+-v <volume-name>:/var/lib/postgresql/ \
+-e BAM_IP=<your_bam_ip_address> \
+-e SECRET_KEY="?=}z@S9A)D7,/*%\[2_Av%L(a&}#xD;y" \
+--name <gateway_container_name> \
+quay.io/bluecat/cloud_discovery_visibility:25.1
+How does CDV use the CDV Secret Key to restart visibility jobs?
+
+Normally, when the CDV container stops (either intentionally or because of a system failure), all running CDV jobs are also stopped. However, if the SECRET_KEY is explicitly specified as an environment variable, CDV will look for stopped visibility jobs and decrypt information about those jobs using that key. All found jobs are decrypted using the SECRET_KEY value, added to an internal queue, then restarted one by one.
+
+Note: When CDV restarts, only jobs that were running are restarted. Visibility jobs that were already Stopped or Failed will remain in that state and must be restarted manually, from the Visibility Management panel.
+If no SECRET_KEY variable is specified, for security reasons the CDV container will not look for or restart stopped jobs. Users can still restart jobs manually after they log in to CDV under an appropriate account.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Configuring CDV workflow permissions
+
+By default, only the Gateway admin user has access to the Cloud Discovery & Visibility (CDV) workflow. If other BlueCat Gateway users will work with CDV, you must configure the workflow permissions to grant those users access.
+
+To configure the workflow permissions:
+
+Log in to BlueCat Gateway.
+
+Under Available Actions, click Administration > Workflow Permissions.
+
+In the Workflows list, select cloud_discovery.
+
+Select cloud_discovery_page.
+
+Under the Group Name/UDF value list, select the appropriate user group.
+
+Click Add.
+
+The Cloud Discovery & Visibility workflow appears under CloudDiscovery in the Available Actions navigation bar for the selected BlueCat Gateway users. You can now proceed to configure the workflow.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Setting the Address Manager and Gateway server certificate
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Setting the Address Manager and Gateway server certificate
+
+In order to use Cloud Discovery & Visibility on systems with HTTPS, you'll need to set up an SSL/TLS certificate for BlueCat Address Manager (BAM) and Gateway to communicate with each other. You'll do so by manually uploading custom certificates yourself.
+
+Certificates are composed of a private key (a .key file) and a public key (a .crt) and . Basic steps are summarized below. For more details, see the Address Manager Administration Guide and the Gateway Administration Guide.
+
+
+Using custom certificates
+Gateway also supports custom certificates for communications with Address Manager. You can use a certificate you already have from a certificate authority, or a certificate that you created yourself. When creating your own certificate, you'll generate a new randomized private .key file, create a .csr file from it (a Certificate Signing Request), then use the CSR to create the public certificate file (.crt).
+
+To create the .key and .csr files, you can either use BlueCat Address Manager, or create it manually with your SSL toolkit.
+
+To create the .key and .csr files in Address Manager:
+
+Within Address Manager, in the Administration tab, under User Management, click Secure Access.
+
+Under Server Certificate Settings, select Custom, then select Generate Certificate Signing Request.
+
+Fill in the Common Name, Organization, Department, City, State/Province, Country code, Email address (optional), and Comment (optional) as desired.
+Click to select the Generate Private Key checkbox.
+In Key Size, select the desired size of the encryption key. We strongly recommend you choose a Key size of at least 2048 bits.
+When you're done, click Generate.
+With the certificate generated, click Download CSR and Download Private Key to download the newly-generated .csr and .key files, respectively.
+
+To create the .key and .csr files manually:
+
+Generate the private key (the .key file). To do so, run the following OpenSSL command:
+openssl genrsa -des3 -out <private_key_name>.key <key_size>
+Where <private_key_name> is a file name for your private key, and the <key_size> is the size (in bits). We recommend a size of at least 2048.
+You'll be asked for a pass phrase. You can leave the pass phrase blank if you prefer.
+
+When you're done, you'll have a .key file.
+
+Generate the .csr file with the following OpenSSL command:
+openssl req -new -key <private_key_name>.key -out <csr_name>.csr
+Where <private_key_name> is the name of your private key file, and <csr_name> is the desired name for your CSR file. (Since the files have different file name extensions, these names they can be the same.)
+Fill in the fields as requested, one by one. The Email Address, Challenge password, and Company name are optional.
+
+When you're done, OpenSSL will generate the .csr file.
+To set up the public key file (.crt) and add the certificates to Address Manager:
+
+Note: You must already have a private key (.key) and matching certificate signing request (.csr) files to generate the public key.
+Generate the .crt file with the following OpenSSL command:
+openssl x509 -req -days 365 -in <csr_name>.csr -signkey <private_key_name>.key -out <crt_name>.crt
+Where <csr_name> is the name of your CSR file and <private_key_name> is the desired name for your private key file. (Since the files have different file name extensions, these names they can be the same.)
+OpenSSL will generate the .crt file.
+
+Add the new certificate files to Address Manager:
+
+Within Address Manager, in the Administration tab, under User Management, click Secure Access.
+
+If you haven't already done so, enable HTTPS (under General, in HTTPS, select Enable).
+
+Under Server Certificate Settings, select Custom.
+Select Load Custom Certificate.
+In the Upload Certificate section, upload the certificate files:
+Under Private Key, click Choose File and browse to your private key file (.key).
+Under Domain Signed Certificate, click Choose File and browse to your public certificate file (.crt).
+Upload the extracted certificates to BlueCat Gateway as follows:
+
+In Gateway, in the navigator area to the left, expand Administration and Configurations, then click General Configuration.
+In the BAM section, click to select the Validate SSL Certificate checkbox.
+In SSL Certificate, click Choose file and browse to the .crt file that you extracted.
+When you're done, click Save.
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
