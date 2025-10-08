@@ -1,0 +1,115 @@
+1. Architecture & Network Foundation
+
+How will on-prem Terraform servers securely reach BlueCat in the NCC Hub (VPN, Interconnect, Private Service Connect, or NAT)?
+
+Is BlueCat running in a high-availability pair or just a single VM?
+
+If single: what’s the plan for backup, restore, and failover?
+
+Will NCC Hub use Private Service Connect to expose BlueCat APIs privately to all spokes?
+
+How will BlueCat integrate with VPC Service Controls and organization policies in GCP?
+
+Is BlueCat licensed for the expected subnet and IP growth across all environments (sandbox, nonprod, prod)?
+
+⚙️ 2. BlueCat API & Terraform Integration
+
+Are you using official BlueCat Terraform provider or custom REST API modules?
+
+What’s the auth method (basic, token, or OAuth) — and how will secrets be managed (Secret Manager, Vault)?
+
+Is the Terraform provider thread-safe for concurrent pipelines (to prevent IP conflicts)?
+
+What’s the rate limit and timeout behavior for BlueCat API calls?
+
+How does Terraform handle retries if BlueCat API is slow/unavailable?
+
+How do you plan to mock/test IPAM API locally without affecting live data?
+
+🧱 3. State & Data Consistency
+
+Where is Terraform state stored (local on-prem, Cloud Storage, or Terraform Cloud)?
+
+How is state locking handled when multiple teams deploy at once?
+
+How will you ensure BlueCat IP allocation data stays consistent with GCP (e.g., subnets deleted manually in GCP)?
+
+Will you implement periodic reconciliation (e.g., weekly job to verify IP consistency)?
+
+What happens if a Terraform plan fails midway — are IPs rolled back in BlueCat?
+
+🧰 4. Reliability & Recovery
+
+If the BlueCat VM or API becomes unavailable, can Terraform deployments continue using cached IP pools?
+
+What’s your disaster recovery plan — snapshot/replication strategy for BlueCat DB?
+
+How do you handle duplicate IP allocation if two pipelines run in parallel?
+
+Are there health checks and uptime monitoring (e.g., Cloud Monitoring + alerting for API downtime)?
+
+Is the BlueCat API behind a load balancer for HA?
+
+🌐 5. Security & Governance
+
+How are you securing BlueCat API endpoints (private IP only, IAM, firewall rules)?
+
+How are credentials stored and rotated (Secret Manager, Vault)?
+
+Will you enforce RBAC or Terraform workspaces per environment?
+
+Who owns IP space delegation — BlueCat admins or Terraform owners?
+
+How will audit logs be collected (e.g., Cloud Logging + on-prem SIEM integration)?
+
+📦 6. Scalability
+
+What’s the projected subnet/IP growth in the next 12 months?
+
+Can BlueCat handle concurrent subnet allocation requests from multiple Terraform runs?
+
+Will NCC Hub need to scale its VM size or use a managed database backend?
+
+How will you handle multi-region IP pools (centralized or per region)?
+
+🧪 7. Testing & Validation
+
+How will you test next-available IP allocation in nonprod safely?
+
+Can you simulate API throttling or network latency to test resilience?
+
+Do you have integration tests that check BlueCat → Terraform → GCP end-to-end?
+
+Will you enforce pre-commit hooks or Terraform plan validation in CI/CD?
+
+🚀 8. CI/CD & Automation
+
+How will you trigger Terraform plans — manually, GitOps (PR-based), or scheduled?
+
+How will you ensure environment separation (workspace, project, or folder-level)?
+
+Are deployments idempotent — running the same plan twice should cause no change.
+
+Do you plan to version control IPAM data (e.g., YAML manifests describing IP blocks)?
+
+What’s the rollback process if a network provisioning fails?
+
+📊 9. Observability
+
+Will BlueCat API logs be exported to Cloud Logging or Splunk?
+
+Do you have dashboards to track IP pool utilization and subnet creation rate?
+
+Can you correlate Terraform state changes with IPAM events?
+
+How will you detect orphaned or stale IPs?
+
+🧭 10. Future Readiness
+
+If Terraform moves to Cloud Workstations or Cloud Build, how does connectivity to BlueCat evolve?
+
+Can this model be extended to manage DNS or DHCP from BlueCat too?
+
+Could you abstract IPAM behind a custom internal API layer (for other automation tools)?
+
+What’s your upgrade plan when BlueCat or its Terraform provider version changes?
