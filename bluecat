@@ -1,0 +1,260 @@
+High-level architecture
+
+BlueCat Address Manager (BAM) + BlueCat Gateway (REST API) runs in a VM in the NCC hub (you already installed it there).
+
+On-prem Terraform servers (control plane) talk over your dedicated Interconnect/private network to the BlueCat Gateway REST endpoint (HTTPS) inside the NCC hub.
+
+Terraform uses the BlueCat Terraform provider (official/plugin) to call the Gateway REST API to create containers, networks, IP allocations, host/ptr records, etc. 
+Terraform Registry
+
+For GCP resources Terraform creates (subnets, GKE/GCE, Cloud NAT, etc.), your Terraform workflows will:
+
+Ask BlueCat for the “next available IP / CIDR block” via Terraform resources.
+
+Use those values in the GCP Terraform modules to create subnets/VMs.
+
+Write back allocations and DNS records into BlueCat via the same run (or separate apply) so BlueCat remains the single source of truth.
+
+Phase 0 — Preconditions & decisions
+
+Confirm BlueCat Gateway REST API is installed & reachable (Gateway provides REST endpoints and session login). Example: POST /rest_login to get a session token. 
+BlueCat Networks Documentation
+
+Decide the ground-truth model in BlueCat (Container hierarchy, IPv4 blocks you’ll manage, naming conventions). BlueCat “Container” is the top logical boundary — plan it first.
+
+Choose Terraform pattern:
+
+Single run: BlueCat provider + GCP provider in same run (one terraform apply orchestrates both).
+
+Two-step: First read/allocate addresses from BlueCat, then run GCP apply using those values. Two-step can be easier for enforcing order and review.
+
+Secrets management: store BlueCat credentials in Secret Manager or an on-prem Vault; do not hardcode. Use provider environment variables via your CI runner.
+
+Terraform version: stick to your org standard (you mentioned 1.6.5 previously — that’s fine).
+
+Phase 1 — Network & Security (connectivity)
+
+Routing: Ensure Terraform servers have a route to the BlueCat VM’s private IP (via Interconnect → NCC hub VPC).
+
+Firewall: On the BlueCat VM/host and GCP side allow inbound HTTPS (443) from Terraform server IP(s) only. If Gateway is on nonstandard port, allow that port.
+
+TLS: Use TLS for the Gateway endpoint. If using a self-signed cert, ensure Terraform hosts trust it (or use an internal CA).
+
+Auth: BlueCat Gateway supports session tokens (via rest_login) and API key/token methods. For automation, prefer a service account user with a strong password and limited privileges (or API token if supported). 
+BlueCat Networks Documentation
+
+Network resilience: If Gateway sits in a single VM, consider HA for Gateway (or standby) to avoid single point of failure.
+
+Phase 2 — BlueCat Gateway / Terraform plugin install & config
+
+If not already done, install BlueCat Gateway and enable the REST API image/module following BlueCat docs. (Gateway includes REST HTTP API and Python APIs used by plugins). 
+BlueCat Networks Documentation
++1
+
+Install/configure the BlueCat Terraform Provider on your Terraform server. There is an official/partner provider on the Terraform Registry (bluecat / bluecatlabs) and BlueCat docs for the plugin. Use a released provider version in your registry block. 
+Terraform Registry
++1
+
+Example provider block (illustrative — adapt to your provider/version and secret approach):
+
+terraform {
+  required_providers {
+    bluecat = {
+      source  = "bluecatlabs/bluecat"
+      version = ">= 2.0.0"
+    }
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 4.0.0"
+    }
+  }
+}
+
+provider "bluecat" {
+  # Options vary by provider; example fields:
+  host     = "https://bluecat-gateway.ncc-hub.internal"
+  username = var.bluecat_user          # use secrets
+  password = var.bluecat_password
+  # OR token = var.bluecat_token
+  insecure = false
+}
+
+
+(See provider docs for exact configuration keys & auth methods.) 
+Terraform Registry
+
+Phase 3 — Terraform resource model (examples)
+
+BlueCat provider resources you’ll likely use (names from docs / plugin guide):
+bluecat_configuration, bluecat_ipv4block, bluecat_ipv4network, bluecat_ip_allocation (or bluecat_ip_association), bluecat_host_record, bluecat_ptr_record, bluecat_dhcp_range. 
+BlueCat Networks Documentation
++1
+
+Concrete example snippets:
+
+Create a Container (top-level object)
+
+resource "bluecat_configuration" "hrl" {
+  name = "HRL-Prod"
+  # provider-specific fields...
+}
+
+
+Create / reserve an IPv4 block (e.g., a /16 or /20)
+
+resource "bluecat_ipv4block" "vpc_block" {
+  configuration = bluecat_configuration.hrl.id
+  network       = "10.10.0.0"
+  cidr          = 16
+  # other options...
+}
+
+
+Create a smaller IPv4 network (subnet) inside that block (e.g., /24)
+
+resource "bluecat_ipv4network" "app_subnet" {
+  configuration = bluecat_configuration.hrl.id
+  network       = "10.10.20.0"
+  cidr          = 24
+  name          = "app-subnet-1"
+  # optionally supply properties for DHCP ranges, comments etc.
+}
+
+
+Allocate (next available) IP from a network
+
+resource "bluecat_ip_allocation" "vm1" {
+  configuration = bluecat_configuration.hrl.id
+  network       = bluecat_ipv4network.app_subnet.id
+  # If you omit the IP, provider will return a next-available IP allocation
+  # provider will populate attributes like ip_address
+}
+# use bluecat_ip_allocation.vm1.ip_address in your GCP resources as a static internal IP if needed
+
+
+Create DNS A record for host
+
+resource "bluecat_host_record" "vm1" {
+  configuration = bluecat_configuration.hrl.id
+  zone          = "example.com"
+  host          = "vm1"
+  ip_address    = bluecat_ip_allocation.vm1.ip_address
+}
+
+
+Note: exact resource names and attributes can differ slightly by provider version — check the provider docs and plugin admin guide for the canonical names. 
+Terraform Registry
++1
+
+Phase 4 — Example flow: create GCP subnet using BlueCat allocated CIDR
+
+Option A — single Terraform run (BlueCat + GCP together):
+
+bluecat_ipv4block / bluecat_ipv4network resources create or reserve a CIDR (e.g., bluecat_ipv4network.app_subnet with 10.10.30.0/24).
+
+Use the network/cidr value as google_compute_subnetwork ip_cidr_range. Example:
+
+resource "google_compute_subnetwork" "app_sn" {
+  name          = "app-subnet-1"
+  ip_cidr_range = "${bluecat_ipv4network.app_subnet.network}/${bluecat_ipv4network.app_subnet.cidr}"
+  region        = var.region
+  network       = var.vpc_self_link
+}
+
+
+Optionally allocate specific gateway/static IPs via bluecat_ip_allocation and set corresponding GCP resource IP (e.g., static internal IP for a VM or an internal load balancer).
+
+Option B — two step (safe, auditable):
+
+Step 1: Run Terraform targeting BlueCat only to create the network / get next IP. Output the allocated CIDR/IP to a file/CI variable.
+
+Step 2: Use that output in the GCP Terraform run to create resources.
+
+Step 3: Write back the GCP resource details (like instance names, NICs, final IPs) into BlueCat as host records.
+
+Two-step is easier to review and gives clearer change sets.
+
+Phase 5 — Testing & validation
+
+Connectivity test: from Terraform host, curl https://bluecat-gateway/.../rest_login with test creds to ensure reachability. (Gateway REST docs show login flow.) 
+BlueCat Networks Documentation
+
+Provider smoke test:
+
+Create a small tf workspace that only manages a BlueCat test container, a tiny /30 network, and an IP allocation.
+
+Validate terraform plan/apply and then terraform destroy.
+
+Integration test:
+
+Do the end-to-end: allocate a CIDR from BlueCat; create corresponding GCP subnet; bring up a test VM; confirm VM IP matches BlueCat record; then deallocate and destroy.
+
+Idempotency: Re-run terraform apply to confirm no drift and that provider handles existing resources gracefully.
+
+Phase 6 — CI/CD, workflows & secrets
+
+Terraform state: Remote backend (GCS backend or on-prem remote state with locking). Because you’re multi-team, use state locking (GCS backend with Cloud KMS encryption or HashiCorp Consul/remote).
+
+Pipeline:
+
+Use your existing on-prem CI (Jenkins/GitLab/Cloud Build via secure path) to run Terraform.
+
+Pipeline steps: terraform fmt → plan (with plan artifact) → manual approval (optional) → apply.
+
+Secrets: Store BlueCat creds in a secure store (Secret Manager or Vault). Inject into runner at runtime. Don’t commit them.
+
+Audit & approvals: For address allocations, require a human review step in CI for production networks (prevents accidental CIDR exhaustion).
+
+Phase 7 — Monitoring, logging & ops
+
+BlueCat Gateway logs: enable audit logging so you can track what the Terraform provider did (allocations, deletions). Gateway exposes workflows and HTTP API telemetry. 
+BlueCat Networks Documentation
+
+Terraform run logs: preserve run output and plans for audit.
+
+Alerts: watch for IP exhaustion, or high resource_usage_score on Gateway (BlueCat docs recommend keeping resource_usage_score < 0.5). 
+BlueCat Networks Documentation
+
+Phase 8 — Hardening & HA
+
+If BlueCat is a single VM in NCC hub, plan HA later (Active/Passive Gateway or multiple Gateway instances) and load-balancing across Gateway nodes. BlueCat docs recommend avoiding Gateway overload. 
+BlueCat Networks Documentation
+
+Limit which Terraform role/users can allocate production networks in BlueCat via roles/permissions in Gateway/BAM.
+
+Common gotchas / tips
+
+Provider version mismatches: Always lock provider version. The resource names and attributes can change between provider releases. 
+Terraform Registry
+
+Network latency/timeouts: Terraform providers talking to on-prem VMs across interconnect are subject to network timeouts — tune provider timeouts if needed.
+
+Session auth expiry: BlueCat sessions may expire; ensure provider handles token refresh or use long-lived API tokens. Check Gateway REST docs for authentication flow. 
+BlueCat Networks Documentation
+
+Concurrent allocations: If you have multiple parallel Terraform runs allocating from same pool, ensure provider and workflow handle race conditions (locks or rely on provider atomic next-ip allocation).
+
+Testing on non-prod: Always validate with a test BlueCat config before doing production allocations.
+
+Minimal starter checklist / quickstart (actionable steps)
+
+From Terraform host, validate network reachability to https://bluecat-gateway.ncc-hub.internal.
+
+Install the BlueCat Terraform provider plugin (add to required_providers). 
+Terraform Registry
+
+Configure provider auth (use secrets).
+
+Create a tiny TF project that:
+
+Creates bluecat_configuration test container.
+
+Creates a bluecat_ipv4block or bluecat_ipv4network.
+
+Allocates an IP (bluecat_ip_allocation).
+
+Destroys them.
+
+Next, extend to use allocated CIDR in a google_compute_subnetwork. Test VM creation.
+
+Iterate on failures, add logging and CI.
